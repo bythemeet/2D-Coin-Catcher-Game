@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Coin Catcher Game</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #1a202c;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-container {
+            text-align: center;
+            background: #2d3748;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #e2e8f0;
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #63b3ed;
+            font-weight: bold;
+        }
+
+        canvas {
+            background-color: #0f172a;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>2D Arcade: Catch the Coins!</h1>
+        <div class="score-board">Score: <span id="score">0</span> | Lives: <span id="lives">3</span></div>
+        
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas" width="400" height="500"></canvas>
+        
+        <div class="instructions">
+            Use <b>Left & Right Arrow Keys</b> to move!
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let score = 0;
+        let lives = 3;
+
+        // Player object (Basket/Box at the bottom)
+        const player = {
+            x: 160,
+            y: 440,
+            width: 80,
+            height: 15,
+            speed: 8,
+            dx: 0
+        };
+
+        // Falling Coin object
+        const coin = {
+            x: Math.random() * 360,
+            y: 0,
+            radius: 12,
+            speed: 4
+        };
+
+        // Keyboard event listeners
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") player.dx = -player.speed;
+            if (e.key === "ArrowRight") player.dx = player.speed;
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
+        });
+
+        function update() {
+            // Move player
+            player.x += player.dx;
+
+            // Prevent player from going outside canvas walls
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // Move coin down
+            coin.y += coin.speed;
+
+            // Check if coin is caught by player
+            if (
+                coin.y + coin.radius >= player.y &&
+                coin.x >= player.x &&
+                coin.x <= player.x + player.width
+            ) {
+                score += 10;
+                document.getElementById("score").innerText = score;
+                resetCoin();
+                // Increase speed slightly as score increases
+                coin.speed += 0.2;
+            }
+
+            // Check if coin hits the floor (missed)
+            if (coin.y > canvas.height) {
+                lives -= 1;
+                document.getElementById("lives").innerText = lives;
+                resetCoin();
+
+                if (lives <= 0) {
+                    alert("Game Over! Final Score: " + score);
+                    document.location.reload();
+                }
+            }
+        }
+
+        function resetCoin() {
+            coin.y = 0;
+            coin.x = Math.random() * (canvas.width - 30) + 15;
+        }
+
+        function draw() {
+            // Clear screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player
+            ctx.fillStyle = "#3182ce";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            // Add a nice top border to player
+            ctx.fillStyle = "#63b3ed";
+            ctx.fillRect(player.x, player.y, player.width, 4);
+
+            // Draw Falling Coin
+            ctx.beginPath();
+            ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ecc94b"; // Golden coin
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Start the game loop
+        loop();
+    </script>
+</body>
+</html>
